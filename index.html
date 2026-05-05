@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Biblioteca Teológica</title>
+
+<link rel="manifest" href="manifest.json">
+
+<style>
+:root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --primary: #3b82f6;
+    --text: #e2e8f0;
+}
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+header {
+    background: #020617;
+    padding: 15px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.container {
+    padding: 15px;
+    max-width: 900px;
+    margin: auto;
+}
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.tabs button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: var(--card);
+    color: white;
+    border-radius: 8px;
+}
+
+.tabs button:hover {
+    background: var(--primary);
+}
+
+.aba {
+    display: none;
+}
+
+.card {
+    background: var(--card);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border: none;
+    background: #020617;
+    color: white;
+}
+
+button.action {
+    background: var(--primary);
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    margin: 3px;
+}
+
+.ponto {
+    background: #020617;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.subponto {
+    margin-left: 10px;
+}
+
+@media print {
+    body { background: white; color: black; }
+    header, .tabs, button { display: none; }
+}
+</style>
+</head>
+
+<body>
+
+<header>📖 Biblioteca Teológica</header>
+
+<div class="container">
+
+<div class="tabs">
+<button onclick="trocarAba('form')">✍️ Criar</button>
+<button onclick="trocarAba('resultado')">📄 Sermão</button>
+<button onclick="trocarAba('biblioteca')">📚 Biblioteca</button>
+</div>
+
+<!-- FORM -->
+<div id="form" class="aba">
+
+<div class="card">
+<input id="texto" placeholder="Texto Bíblico">
+<textarea id="intro" placeholder="Introdução"></textarea>
+<textarea id="exegeseInput" placeholder="Ideia Exegética"></textarea>
+<textarea id="homileticaInput" placeholder="Ideia Homilética"></textarea>
+<textarea id="oracao" placeholder="Oração de Transição"></textarea>
+<textarea id="apoio" placeholder="Apoio Teológico"></textarea>
+</div>
+
+<div class="card">
+<h3>Pontos</h3>
+<div id="pontos"></div>
+<button class="action" onclick="addPonto()">➕ Ponto</button>
+</div>
+
+<div class="card">
+<textarea id="aplicacao" placeholder="Aplicação"></textarea>
+</div>
+
+<button class="action" onclick="gerar()">Gerar</button>
+<button class="action" onclick="salvar()">Salvar</button>
+<button class="action" onclick="novo()">Novo</button>
+<button class="action" onclick="backup()">Backup</button>
+<input type="file" onchange="restaurar(event)">
+
+</div>
+
+<!-- RESULTADO -->
+<div id="resultado" class="aba">
+<button class="action" onclick="window.print()">📄 PDF</button>
+<div id="saida" class="card"></div>
+</div>
+
+<!-- BIBLIOTECA -->
+<div id="biblioteca" class="aba">
+<input id="busca" placeholder="Buscar..." oninput="listar()">
+<div id="lista"></div>
+</div>
+
+</div>
+
+<script>
+
+// abas
+function trocarAba(id){
+document.querySelectorAll(".aba").forEach(a=>a.style.display="none");
+document.getElementById(id).style.display="block";
+}
+
+// pontos
+function addPonto(){
+let div=document.createElement("div");
+div.className="ponto";
+div.innerHTML=`<input class="titulo" placeholder="Título">
+<div class="subs"></div>
+<button onclick="addSub(this)">Subponto</button>`;
+pontos.appendChild(div);
+}
+
+function addSub(btn){
+let c=btn.parentElement.querySelector(".subs");
+let i=document.createElement("input");
+i.className="subponto";
+i.placeholder="Subponto";
+c.appendChild(i);
+}
+
+// gerar
+function gerar(){
+let html=`<h2>${texto.value}</h2>
+<h3>Introdução</h3>${intro.value}
+<p><b>Exegese:</b> ${exegeseInput.value}</p>
+<p><b>Homilética:</b> ${homileticaInput.value}</p>
+<h3>Oração</h3>${oracao.value}
+<h3>Apoio</h3>${apoio.value}`;
+
+document.querySelectorAll(".ponto").forEach(p=>{
+html+=`<h4>${p.querySelector(".titulo").value}</h4><ul>`;
+p.querySelectorAll(".subponto").forEach(s=>{
+html+=`<li>${s.value}</li>`;
+});
+html+="</ul>";
+});
+
+html+=`<h3>Aplicação</h3>${aplicacao.value}`;
+
+saida.innerHTML=html;
+}
+
+// salvar
+function salvar(){
+let dados=JSON.parse(localStorage.getItem("sermoes"))||[];
+dados.push({id:Date.now(),texto:texto.value});
+localStorage.setItem("sermoes",JSON.stringify(dados));
+listar();
+alert("Salvo!");
+}
+
+// listar
+function listar(){
+let lista=document.getElementById("lista");
+let dados=JSON.parse(localStorage.getItem("sermoes"))||[];
+lista.innerHTML="";
+dados.forEach(s=>{
+lista.innerHTML+=`<div class="card">${s.texto}</div>`;
+});
+}
+
+// novo
+function novo(){
+document.querySelectorAll("input,textarea").forEach(e=>e.value="");
+pontos.innerHTML="";
+addPonto();
+}
+
+// backup
+function backup(){
+let data=localStorage.getItem("sermoes");
+let blob=new Blob([data]);
+let a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="backup.json";
+a.click();
+}
+
+// restaurar
+function restaurar(e){
+let reader=new FileReader();
+reader.onload=()=>localStorage.setItem("sermoes",reader.result);
+reader.readAsText(e.target.files[0]);
+listar();
+}
+
+// service worker
+if("serviceWorker" in navigator){
+navigator.serviceWorker.register("service-worker.js");
+}
+
+window.onload=()=>{
+trocarAba('form');
+addPonto();
+listar();
+}
+
+</script>
+
+</body>
+</html>
